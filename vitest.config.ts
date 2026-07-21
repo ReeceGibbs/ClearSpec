@@ -40,8 +40,12 @@ export default defineConfig({
         'test/**'
       ]
     },
-    testTimeout: 10000,
-    hookTimeout: 10000,
-    teardownTimeout: 3000
+    // Tests spawn a fresh Node CLI subprocess per assertion (~1s+ each). Under
+    // parallel forks on Windows (with Defender scanning temp dirs), individual
+    // spawns can occasionally stall, so keep generous headroom over the ~1-4s
+    // typical case to avoid flaky timeouts.
+    testTimeout: 30000,
+    hookTimeout: 20000,
+    teardownTimeout: 5000
   }
 });
