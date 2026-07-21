@@ -97,12 +97,15 @@ export async function runCLI(args: string[] = [], options: RunCLIOptions = {}): 
     let stderr = '';
     let timedOut = false;
 
-    const timeout = options.timeoutMs
-      ? setTimeout(() => {
-          timedOut = true;
-          child.kill('SIGKILL');
-        }, options.timeoutMs)
-      : undefined;
+    // Always enforce a timeout so a stuck/slow child is killed by us rather than
+    // left alive when vitest aborts the test. An orphaned child keeps `cwd` on
+    // the temp dir, which makes afterEach cleanup fail with EBUSY on Windows.
+    // Keep the default below vitest's testTimeout so the kill wins the race.
+    const timeoutMs = options.timeoutMs ?? 20000;
+    const timeout = setTimeout(() => {
+      timedOut = true;
+      child.kill('SIGKILL');
+    }, timeoutMs);
 
     child.stdout?.setEncoding('utf-8');
     child.stdout?.on('data', (chunk) => {

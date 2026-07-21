@@ -19,7 +19,9 @@ describe('artifact-workflow CLI commands', () => {
 
   afterEach(async () => {
     if (tempDir) {
-      await fs.rm(tempDir, { recursive: true, force: true });
+      // Retry to tolerate transient EBUSY/EPERM on Windows, where a just-exited
+      // CLI subprocess or AV scan can briefly hold a handle on the temp dir.
+      await fs.rm(tempDir, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 });
     }
   });
 
